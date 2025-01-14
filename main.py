@@ -26,16 +26,16 @@ def analyze_words(list1, list2):
 # Streamlit app
 st.title("Word Presence Analysis")
 
-st.write("Upload two text files: One for the first list and one for the second list.")
+st.write("Enter the two lists below:")
 
-# File uploaders for the two lists
-file1 = st.file_uploader("Upload the first list (line by line)", type=["txt"])
-file2 = st.file_uploader("Upload the second list (space-separated)", type=["txt"])
+# Text inputs for the two lists
+list1_input = st.text_area("Enter the first list (line by line)", height=200)
+list2_input = st.text_area("Enter the second list (space-separated)", height=100)
 
-if file1 and file2:
-    # Reading the uploaded files
-    list1 = [line.strip() for line in file1.read().decode("utf-8").splitlines() if line.strip()]
-    list2 = file2.read().decode("utf-8").strip()
+if list1_input and list2_input:
+    # Processing the input
+    list1 = [line.strip() for line in list1_input.splitlines() if line.strip()]
+    list2 = list2_input.strip()
 
     # Perform analysis
     result_df = analyze_words(list1, list2)
@@ -52,4 +52,4 @@ if file1 and file2:
         mime="text/csv"
     )
 else:
-    st.write("Please upload both files to proceed.")
+    st.write("Please provide both lists to proceed.")
