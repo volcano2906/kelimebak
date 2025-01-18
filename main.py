@@ -32,12 +32,12 @@ st.title("Word Presence Analysis")
 st.write("Enter the two lists below:")
 
 # Text inputs for the two lists
-list1_input = st.text_area("Enter the first list (line by line)", height=200)
+list1_input = st.text_area("Enter the first list (comma or line-separated)", height=200)
 list2_input = st.text_area("Enter the second list (comma or space-separated)", height=100)
 
 if list1_input and list2_input:
-    # Processing the input
-    list1 = [line.strip() for line in list1_input.splitlines() if line.strip()]
+    # Processing the input for list1 (supports both comma and line separation)
+    list1 = [item.strip() for line in list1_input.splitlines() for item in line.split(",") if item.strip()]
     list2 = list2_input.strip()
 
     # Perform analysis
