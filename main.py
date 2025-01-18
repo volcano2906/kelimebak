@@ -6,18 +6,21 @@ def analyze_words(list1, list2):
     # Splitting each phrase in the first list into individual words
     list1_with_words = {phrase: ", ".join(phrase.split()) for phrase in list1}
 
+    # Cleaning and normalizing the second list (handles patterns like 'english,american,')
+    list2_normalized = [word.strip().lower() for word in list2.replace(",", " ").split() if word.strip()]
+
     # Checking if each word from the split phrases is present in the second list
     results_split_words_updated = {
         phrase: {
             "Split Words": split_words,
-            "Status": ", ".join([word for word in phrase.split() if word not in map(str.lower, list2.split())])
+            "Status": ", ".join([word for word in phrase.split() if word.lower() not in list2_normalized])
         }
         for phrase, split_words in list1_with_words.items()
     }
 
     # Converting the updated results into a DataFrame
     results_split_words_updated_df = pd.DataFrame([
-        {"Phrase": phrase, "Split Words": data["Split Words"], "Status": data["Status"]}
+        {"Phrase": phrase.encode("utf-8").decode("utf-8"), "Split Words": data["Split Words"].encode("utf-8").decode("utf-8"), "Status": data["Status"].encode("utf-8").decode("utf-8")}
         for phrase, data in results_split_words_updated.items()
     ])
 
@@ -30,7 +33,7 @@ st.write("Enter the two lists below:")
 
 # Text inputs for the two lists
 list1_input = st.text_area("Enter the first list (line by line)", height=200)
-list2_input = st.text_area("Enter the second list (space-separated)", height=100)
+list2_input = st.text_area("Enter the second list (comma or space-separated)", height=100)
 
 if list1_input and list2_input:
     # Processing the input
@@ -47,7 +50,7 @@ if list1_input and list2_input:
     # Option to download the results
     st.download_button(
         label="Download Results as CSV",
-        data=result_df.to_csv(index=False),
+        data=result_df.to_csv(index=False, encoding="utf-8"),
         file_name="word_presence_analysis.csv",
         mime="text/csv"
     )
