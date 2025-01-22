@@ -47,6 +47,10 @@ if list1_input and list2_input:
     st.write("### Analysis Results")
     st.dataframe(result_df)
 
+    # Count characters in the second list
+    char_count = len(list2)
+    st.write(f"### Character Count in Second List: {char_count}")
+
     # Option to download the results
     st.download_button(
         label="Download Results as CSV",
