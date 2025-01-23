@@ -40,16 +40,16 @@ if list1_input and list2_input:
     list1 = [item.strip() for line in list1_input.splitlines() for item in line.split(",") if item.strip()]
     list2 = list2_input.strip()
 
+    # Count characters in the second list
+    char_count = len(list2)
+    st.write(f"### Character Count in Second List: {char_count}")
+
     # Perform analysis
     result_df = analyze_words(list1, list2)
 
     # Display results
     st.write("### Analysis Results")
     st.dataframe(result_df)
-
-    # Count characters in the second list
-    char_count = len(list2)
-    st.write(f"### Character Count in Second List: {char_count}")
 
     # Option to download the results
     st.download_button(
