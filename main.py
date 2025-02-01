@@ -121,7 +121,7 @@ table_input = st.text_area("Paste your Excel table data", height=200)
 # Three separate text fields for word lists
 first_field  = st.text_input("Enter first text (max 30 characters)", max_chars=30)
 second_field = st.text_input("Enter second text (max 30 characters)", max_chars=30)
-third_field  = st.text_area("Enter third text (comma or space-separated, max 100 characters)", max_chars=100)
+third_field  = st.text_input("Enter third text (comma or space-separated, max 100 characters)", max_chars=100)
 
 # Combine the three fields into one string for analysis
 combined_text = f"{first_field} {second_field} {third_field}".strip()
