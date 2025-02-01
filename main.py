@@ -229,18 +229,6 @@ def optimize_keyword_placement(keyword_list):
 # Part 3: Streamlit Interface
 ##############################
 
-st.title("Word Analysis & Optimized Keyword Placement")
-
-st.write(
-    """
-    ### Instructions
-    1. **Paste your table data (Excel format):**  
-       Copy and paste your Excel table data (typically tab-separated) into the text area below.  
-       The table must contain the following columns:  
-       `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
-    """
-)
-
 # Text area for pasting table data
 table_input = st.text_area("Paste your Excel table data", height=200)
 
@@ -292,7 +280,6 @@ if table_input:
         
         # Combine the three fields for word analysis
         combined_text = f"{first_field} {second_field} {third_field}".strip()
-        st.write("### Combined Word List for Analysis:", combined_text)
         
         # Perform word analysis on the combined text using keywords from Excel
         analysis_df = analyze_words(excel_keywords, combined_text)
@@ -305,7 +292,5 @@ if table_input:
             mime="text/csv"
         )
         
-        # Also, display total optimized points
-        st.write("**Total Optimized Points:**", optimized_fields.get("Total Points"))
 else:
     st.write("Please paste your table data to proceed.")
