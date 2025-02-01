@@ -165,7 +165,11 @@ def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_ke
     return field, total_points, used_keywords, field_limit - remaining_chars
 
 def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywords, stop_words):
-    """Fill field 3, allowing keyword breaking while ensuring no duplicate words or stop words."""
+    """
+    Fill Field 3 with word breaking, ensuring that the final joined string
+    does not exceed the field_limit. Words are appended only if adding them
+    does not exceed the limit.
+    """
     field = []
     total_points = 0
     remaining_chars = field_limit
@@ -176,11 +180,18 @@ def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywor
         words = kw.split()
         for word in words:
             normalized_word = normalize_word(word)
-            if normalized_word not in used_words and normalized_word not in stop_words and remaining_chars >= len(word):
-                field.append(word)
-                total_points += f3_points  # Full points if the word is used
-                used_words.add(normalized_word)
-                remaining_chars -= len(word) + 1  # +1 for comma or space
+            # Check if word is not used, not a stop word, and fits in the remaining space
+            if normalized_word not in used_words and normalized_word not in stop_words:
+                # We assume a comma separator for Field 3; if field is empty no separator is needed.
+                sep_length = 1 if field else 0
+                if remaining_chars - (len(word) + sep_length) >= 0:
+                    field.append(word)
+                    total_points += f3_points  # Full points if the word is used
+                    used_words.add(normalized_word)
+                    remaining_chars -= (len(word) + sep_length)
+                else:
+                    # Stop adding words if the next one doesn't fit.
+                    break
     return field, total_points, used_keywords, field_limit - remaining_chars
 
 def optimize_keyword_placement(keyword_list):
@@ -197,12 +208,13 @@ def optimize_keyword_placement(keyword_list):
     # Construct best phrase dynamically for Field 2 (multiplier 1)
     field2, points2, used_kw2, length2 = construct_best_phrase(29, sorted_keywords, 1, used_words, used_keywords)
     
-    # Fill Field 3 (multiplier 1/3, allows word breaking)
+    # Fill Field 3 (multiplier 1/3, allows word breaking) with a 100-character limit
     field3, points3, used_kw3, length3 = fill_field_with_word_breaking(100, sorted_keywords, used_words, used_keywords, stop_words)
     points3 *= (1/3)
     
-    # Join Field 3 keywords with a comma and ensure the result does not exceed 100 characters.
+    # Join Field 3 keywords with a comma (no extra space)
     field3_str = ",".join(field3)
+    # Ensure that the final string does not exceed 100 characters.
     if len(field3_str) > 100:
         field3_str = field3_str[:100]
     
