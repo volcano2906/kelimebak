@@ -110,11 +110,12 @@ def calculate_effective_points(keyword_list):
         if len(words) == 1:
             return base_points  # Exact match (single word)
         return sum(base_points / (i + 1) for i in range(len(words) - 1))
+    
     return [(kw, points, keyword_score(kw, points), keyword_score(kw, points), keyword_score(kw, points) * (1/3))
             for kw, points in keyword_list]
 
 def sort_keywords_by_total_points(keyword_list):
-    """Sort keywords by total calculated points."""
+    """Sort keywords by total calculated points instead of per character efficiency."""
     return sorted(keyword_list, key=lambda x: x[1], reverse=True)
 
 def normalize_word(word):
@@ -122,33 +123,37 @@ def normalize_word(word):
     return word.rstrip('s')
 
 def expand_keywords(keyword_list, max_length=29):
-    """Generate potential keyword combinations based on existing keywords and calculate adjusted points."""
+    """Generate potential keyword combinations based on existing keywords and calculate their adjusted points."""
     expanded_keywords = set(keyword_list)
     keyword_map = {kw: points for kw, points in keyword_list}
+    
     for kw1, points1 in keyword_list:
         for kw2, points2 in keyword_list:
             if kw1 != kw2:
                 words1 = kw1.split()
                 words2 = kw2.split()
-                combined = words1 + [w for w in words2 if w not in words1]
+                combined = words1 + [w for w in words2 if w not in words1]  # Ordered expansion
                 new_kw = " ".join(combined)
                 if new_kw not in keyword_map and len(new_kw) <= max_length:
                     distance = abs(len(words1) - len(words2))
                     new_points = points1 + (points2 / (distance + 1))
                     expanded_keywords.add((new_kw, new_points))
+    
     return list(expanded_keywords)
 
 def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_keywords):
-    """Constructs the highest scoring phrase dynamically."""
+    """Constructs the highest scoring phrase dynamically by combining keywords."""
     field = []
     total_points = 0
     remaining_chars = field_limit
+    
     sorted_keywords = sort_keywords_by_total_points(keywords)
     while remaining_chars > 0 and sorted_keywords:
         best_keyword = sorted_keywords.pop(0)
         kw, base_points, f1_points, f2_points, f3_points = best_keyword
         words = kw.split()
         normalized_words = {normalize_word(word) for word in words}
+        
         if kw not in used_keywords and not normalized_words.intersection(used_words):
             if remaining_chars - len(kw) >= 0:
                 field.append(kw)
@@ -156,16 +161,18 @@ def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_ke
                 used_keywords.add(kw)
                 used_words.update(normalized_words)
                 remaining_chars -= len(kw) + 1  # +1 for space
+    
     return field, total_points, used_keywords, field_limit - remaining_chars
 
 def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywords, stop_words):
-    """Fill field 3 allowing keyword breaking while avoiding duplicates and stop words."""
+    """Fill field 3, allowing keyword breaking while ensuring no duplicate words or stop words."""
     field = []
     total_points = 0
     remaining_chars = field_limit
+    
     for kw, base_points, f1_points, f2_points, f3_points in keywords:
         if kw in used_keywords:
-            continue
+            continue  # Skip already used full keywords
         words = kw.split()
         for word in words:
             normalized_word = normalize_word(word)
@@ -183,14 +190,19 @@ def optimize_keyword_placement(keyword_list):
     sorted_keywords = calculate_effective_points(expanded_keywords)
     used_words = set()
     used_keywords = set()
-    # Field 1 (max length 29, multiplier 1)
+    
+    # Construct best phrase dynamically for Field 1 (multiplier 1)
     field1, points1, used_kw1, length1 = construct_best_phrase(29, sorted_keywords, 1, used_words, used_keywords)
-    # Field 2 (max length 29, multiplier 1)
+    
+    # Construct best phrase dynamically for Field 2 (multiplier 1)
     field2, points2, used_kw2, length2 = construct_best_phrase(29, sorted_keywords, 1, used_words, used_keywords)
-    # Field 3 (max length 100, multiplier 1/3, allows word breaking)
+    
+    # Fill Field 3 (multiplier 1/3, allows word breaking)
     field3, points3, used_kw3, length3 = fill_field_with_word_breaking(100, sorted_keywords, used_words, used_keywords, stop_words)
     points3 *= (1/3)
+    
     total_points = points1 + points2 + points3
+    
     return {
         "Field 1": (" ".join(field1), points1, length1),
         "Field 2": (" ".join(field2), points2, length2),
@@ -208,48 +220,29 @@ st.write(
     """
     ### Instructions
     1. **Paste your table data (Excel format):**  
-       Copy and paste your Excel table data (tab-separated) into the text area below.  
-       The table must include: `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
-    2. **Provide three word lists:**  
-       - **First Field:** (Max 30 characters)  
-       - **Second Field:** (Max 30 characters)  
-       - **Third Field:** (Comma or space-separated, Max 100 characters)  
-       These inputs will be combined for word analysis.
+       Copy and paste your Excel table data (typically tab-separated) into the text area below.  
+       The table must contain the following columns:  
+       `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
     """
 )
 
 # Text area for pasting table data
 table_input = st.text_area("Paste your Excel table data", height=200)
 
-# Use a form to group the three text inputs
-with st.form("word_inputs"):
-    first_field  = st.text_input("Enter first text (max 30 characters)", max_chars=30)
-    # A placeholder for Optimized Field 1 result will be shown after form submission
-    second_field = st.text_input("Enter second text (max 30 characters)", max_chars=30)
-    # A placeholder for Optimized Field 2 result
-    third_field  = st.text_input("Enter third text (comma or space-separated, max 100 characters)", max_chars=100)
-    submitted = st.form_submit_button("Submit Text Fields")
-
-# Combine text fields only if the form was submitted
-if submitted:
-    combined_text = f"{first_field} {second_field} {third_field}".strip()
-else:
-    combined_text = ""
-
-# Proceed only if table data and combined text exist
-if table_input and combined_text:
+if table_input:
     try:
         table_io = io.StringIO(table_input)
         df_table = pd.read_csv(table_io, sep="\t")
     except Exception as e:
         st.error(f"Error reading table data: {e}")
         st.stop()
-
+    
     required_columns = ["Keyword", "Volume", "Difficulty", "Chance", "KEI", "Results", "Rank"]
     if not all(col in df_table.columns for col in required_columns):
-        st.error(f"The pasted table must contain: {', '.join(required_columns)}")
+        st.error(f"The pasted table must contain the following columns: {', '.join(required_columns)}")
+        st.stop()
     else:
-        # Normalize columns and calculate Final Score
+        # Normalize and calculate columns
         df_table["Normalized Difficulty"] = df_table["Difficulty"].apply(update_difficulty)
         df_table["Normalized Rank"] = df_table["Rank"].apply(update_rank)
         df_table["Calculated Result"] = df_table["Results"].apply(update_result)
@@ -257,10 +250,37 @@ if table_input and combined_text:
         df_table = df_table.drop(columns=["Chance", "KEI"])
         df_table = df_table.sort_values(by="Final Score", ascending=False)
         
-        # Word Analysis
-        keywords = df_table["Keyword"].dropna().tolist()
-        st.write(f"### Combined Word List for Analysis: {combined_text}")
-        analysis_df = analyze_words(keywords, combined_text)
+        # Build the keyword list for optimization from the Excel data:
+        # Each tuple: (Keyword, Final Score)
+        opt_keyword_list = list(zip(df_table["Keyword"].tolist(), df_table["Final Score"].tolist()))
+        optimized_fields = optimize_keyword_placement(opt_keyword_list)
+        
+        # Extract all keywords (for word analysis) from the table
+        excel_keywords = df_table["Keyword"].dropna().tolist()
+
+        ##############################
+        # Display Text Inputs and Optimized Results
+        ##############################
+        st.subheader("Enter Word Lists")
+        
+        # First text input and its optimized field (Field 1)
+        first_field = st.text_input("Enter first text (max 30 characters)", max_chars=30)
+        st.write("**Optimized Field 1:**", optimized_fields.get("Field 1")[0])
+        
+        # Second text input and its optimized field (Field 2)
+        second_field = st.text_input("Enter second text (max 30 characters)", max_chars=30)
+        st.write("**Optimized Field 2:**", optimized_fields.get("Field 2")[0])
+        
+        # Third text input and its optimized field (Field 3)
+        third_field = st.text_input("Enter third text (comma or space-separated, max 100 characters)", max_chars=100)
+        st.write("**Optimized Field 3:**", optimized_fields.get("Field 3")[0])
+        
+        # Combine the three fields for word analysis
+        combined_text = f"{first_field} {second_field} {third_field}".strip()
+        st.write("### Combined Word List for Analysis:", combined_text)
+        
+        # Perform word analysis on the combined text using keywords from Excel
+        analysis_df = analyze_words(excel_keywords, combined_text)
         st.write("### Word Analysis Results")
         st.dataframe(analysis_df)
         st.download_button(
@@ -270,26 +290,7 @@ if table_input and combined_text:
             mime="text/csv"
         )
         
-        # --- Optimization Step ---
-        # Build a keyword list for optimization: each tuple (Keyword, Final Score)
-        opt_keyword_list = list(zip(df_table["Keyword"].tolist(), df_table["Final Score"].tolist()))
-        optimized_fields = optimize_keyword_placement(opt_keyword_list)
-        
-        st.write("### Optimized Keyword Placement")
-        # Display Field 1 result just below the first text field
-        st.markdown("**Optimized Field 1 (for first text):**")
-        field1_text, field1_points, field1_length = optimized_fields["Field 1"]
-        st.write(f"{field1_text} (Points: {field1_points:.2f}, Length used: {field1_length})")
-        # Display Field 2 result just below the second text field
-        st.markdown("**Optimized Field 2 (for second text):**")
-        field2_text, field2_points, field2_length = optimized_fields["Field 2"]
-        st.write(f"{field2_text} (Points: {field2_points:.2f}, Length used: {field2_length})")
-        # Display Field 3 result just below the third text field
-        st.markdown("**Optimized Field 3 (for third text):**")
-        field3_text, field3_points, field3_length = optimized_fields["Field 3"]
-        st.write(f"{field3_text} (Points: {field3_points:.2f}, Length used: {field3_length})")
-        # Display Total Points
-        st.markdown("**Total Points:**")
-        st.write(f"{optimized_fields['Total Points']:.2f}")
+        # Also, display total optimized points
+        st.write("**Total Optimized Points:**", optimized_fields.get("Total Points"))
 else:
-    st.write("Please paste your table data and submit input in the three word fields to proceed.")
+    st.write("Please paste your table data to proceed.")
