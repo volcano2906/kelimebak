@@ -98,19 +98,6 @@ def calculate_final_score(row):
         final_score = 0
     return final_score
 
-st.title("Word Presence Analysis with Normalized Columns and Final Score")
-
-st.write(
-    """
-    ### Instructions
-    1. **Paste your table data (Excel format):**  
-       Copy and paste your Excel table data (typically tab-separated) into the text area below.  
-       The table must contain the following columns:  
-       `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
-    2. **Enter the second list:**  
-       This should be a string of words separated by commas or spaces.
-    """
-)
 
 # Text area for copy-pasting the table data (Excel-style, tab-separated)
 table_input = st.text_area("Paste your Excel table data", height=200)
