@@ -166,9 +166,8 @@ def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_ke
 
 def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywords, stop_words):
     """
-    Fill Field 3 with word breaking, ensuring that the final joined string
-    does not exceed the field_limit. Words are appended only if adding them
-    does not exceed the limit.
+    Fill Field 3 with word breaking, ensuring that adding a word (plus a comma if needed)
+    does not exceed the field_limit (100 characters).
     """
     field = []
     total_points = 0
@@ -180,9 +179,8 @@ def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywor
         words = kw.split()
         for word in words:
             normalized_word = normalize_word(word)
-            # Check if word is not used, not a stop word, and fits in the remaining space
             if normalized_word not in used_words and normalized_word not in stop_words:
-                # We assume a comma separator for Field 3; if field is empty no separator is needed.
+                # Determine separator length: 1 character for a comma if field is not empty.
                 sep_length = 1 if field else 0
                 if remaining_chars - (len(word) + sep_length) >= 0:
                     field.append(word)
@@ -294,11 +292,12 @@ if table_input:
         
         # Combine the three fields for word analysis
         combined_text = f"{first_field} {second_field} {third_field}".strip()
+        st.write("### Combined Word List for Analysis:", combined_text)
         
         # Perform word analysis on the combined text using keywords from Excel
         analysis_df = analyze_words(excel_keywords, combined_text)
         st.write("### Word Analysis Results")
-        st.dataframe(analysis_df)
+        st.dataframe(analysis_df, use_container_width=True)
         st.download_button(
             label="Download Word Analysis CSV",
             data=analysis_df.to_csv(index=False, encoding="utf-8"),
@@ -307,5 +306,6 @@ if table_input:
         )
         
         # Also, display total optimized points
+        st.write("**Total Optimized Points:**", optimized_fields.get("Total Points"))
 else:
     st.write("Please paste your table data to proceed.")
