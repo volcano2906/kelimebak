@@ -148,9 +148,7 @@ if table_input and list2_input:
         
         # Sort the DataFrame by Final Score in descending order
         df_table = df_table.sort_values(by="Final Score", ascending=False)
-        
-        st.write("### Table Preview (with Normalized Columns)")
-        st.dataframe(df_table)  # Display the full table without Chance and KEI, sorted by Final Score
+        # Display the full table without Chance and KEI, sorted by Final Score
 
         # Extract the list of keywords from the table
         keywords = df_table["Keyword"].dropna().tolist()
