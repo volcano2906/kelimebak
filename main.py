@@ -1,64 +1,93 @@
 import streamlit as st
 import pandas as pd
 
-# Function to perform word-level analysis
-def analyze_words(list1, list2):
-    # Splitting each phrase in the first list into individual words
-    list1_with_words = {phrase: ", ".join(phrase.split()) for phrase in list1}
+# Function to perform word-level analysis on the keywords
+def analyze_words(keywords, list2):
+    # For each keyword, split into individual words and join them with a comma for display
+    keywords_with_words = {phrase: ", ".join(phrase.split()) for phrase in keywords}
 
-    # Cleaning and normalizing the second list (handles patterns like 'english,american,')
+    # Normalize the second list (handling patterns like "english,american,")
     list2_normalized = [word.strip().lower() for word in list2.replace(",", " ").split() if word.strip()]
 
-    # Checking if each word from the split phrases is present in the second list
-    results_split_words_updated = {
+    # Build the analysis: for each phrase, list its words and append those not in the normalized list
+    results = {
         phrase: {
-            "Split Words": split_words,
+            "Split Words": keywords_with_words[phrase],
             "Status": ",".join([word for word in phrase.split() if word.lower() not in list2_normalized])
         }
-        for phrase, split_words in list1_with_words.items()
+        for phrase in keywords_with_words
     }
 
-    # Converting the updated results into a DataFrame
-    results_split_words_updated_df = pd.DataFrame([
-        {"Phrase": phrase.encode("utf-8").decode("utf-8"), 
-         "Split Words": data["Split Words"].encode("utf-8").decode("utf-8"), 
-         "Status": data["Status"].encode("utf-8").decode("utf-8")}
-        for phrase, data in results_split_words_updated.items()
+    # Convert the results dictionary into a DataFrame for display
+    results_df = pd.DataFrame([
+        {"Phrase": phrase,
+         "Split Words": data["Split Words"],
+         "Status": data["Status"]}
+        for phrase, data in results.items()
     ])
 
-    return results_split_words_updated_df
+    return results_df
 
-# Streamlit app
 st.title("Word Presence Analysis")
 
-st.write("Enter the two lists below:")
+st.write(
+    """
+    ### Instructions
+    1. **Upload a CSV file:**  
+       The CSV must contain the following columns:  
+       `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
+    2. **Enter the second list:**  
+       This should be a string of words separated by commas or spaces.
+    """
+)
 
-# Text inputs for the two lists
-list1_input = st.text_area("Enter the first list (comma or line-separated)", height=200)
+# File uploader for the first input (table)
+uploaded_file = st.file_uploader(
+    "Upload a CSV file with columns: Keyword, Volume, Difficulty, Chance, KEI, Results, Rank", 
+    type=["csv"]
+)
+
+# Text input for the second list
 list2_input = st.text_area("Enter the second list (comma or space-separated)", height=100)
 
-if list1_input and list2_input:
-    # Processing the input for list1 (supports both comma and line separation)
-    list1 = [item.strip() for line in list1_input.splitlines() for item in line.split(",") if item.strip()]
-    list2 = list2_input.strip()
+if uploaded_file is not None and list2_input:
+    # Read the CSV file into a DataFrame
+    try:
+        df_table = pd.read_csv(uploaded_file)
+    except Exception as e:
+        st.error(f"Error reading CSV file: {e}")
+        st.stop()
 
-    # Count characters in the second list
-    char_count = len(list2)
-    st.write(f"### Character Count in Second List: {char_count}")
+    # Required columns
+    required_columns = ["Keyword", "Volume", "Difficulty", "Chance", "KEI", "Results", "Rank"]
 
-    # Perform analysis
-    result_df = analyze_words(list1, list2)
+    # Check if all required columns exist in the uploaded CSV
+    if not all(col in df_table.columns for col in required_columns):
+        st.error(f"The uploaded CSV must contain the following columns: {', '.join(required_columns)}")
+    else:
+        st.write("### Uploaded Table Preview")
+        st.dataframe(df_table.head())
 
-    # Display results
-    st.write("### Analysis Results")
-    st.dataframe(result_df)
+        # Extract the list of keywords from the table
+        keywords = df_table["Keyword"].dropna().tolist()
 
-    # Option to download the results
-    st.download_button(
-        label="Download Results as CSV",
-        data=result_df.to_csv(index=False, encoding="utf-8"),
-        file_name="word_presence_analysis.csv",
-        mime="text/csv"
-    )
+        # Count characters in the second list and display it
+        char_count = len(list2_input)
+        st.write(f"### Character Count in Second List: {char_count}")
+
+        # Perform the word analysis using the 'Keyword' column
+        analysis_df = analyze_words(keywords, list2_input)
+
+        # Display the analysis results
+        st.write("### Analysis Results")
+        st.dataframe(analysis_df)
+
+        # Download button for the results CSV
+        st.download_button(
+            label="Download Analysis Results as CSV",
+            data=analysis_df.to_csv(index=False, encoding="utf-8"),
+            file_name="word_presence_analysis.csv",
+            mime="text/csv"
+        )
 else:
-    st.write("Please provide both lists to proceed.")
+    st.write("Please upload a table and provide the second list to proceed.")
