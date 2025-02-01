@@ -110,7 +110,7 @@ def calculate_effective_points(keyword_list):
         if len(words) == 1:
             return base_points  # Exact match (single word)
         return sum(base_points / (i + 1) for i in range(len(words) - 1))
-    # Returns a list of tuples: (keyword, base_points, and several derived point values)
+    
     return [(kw, points, keyword_score(kw, points), keyword_score(kw, points), keyword_score(kw, points) * (1/3))
             for kw, points in keyword_list]
 
@@ -278,13 +278,16 @@ if table_input and combined_text:
         )
         
         # --- Optimization Step ---
-        # Build the keyword list for optimization:
-        # Each tuple: (Keyword, Final Score)
+        # Build the keyword list for optimization: each tuple consists of (Keyword, Final Score)
         opt_keyword_list = list(zip(df_table["Keyword"].tolist(), df_table["Final Score"].tolist()))
         optimized_fields = optimize_keyword_placement(opt_keyword_list)
         
         st.write("### Optimized Keyword Placement")
-        for field, (kw_text, points, used_length) in optimized_fields.items():
-            st.write(f"**{field}:** {kw_text} (Points: {points:.2f}, Length used: {used_length})")
+        for field, value in optimized_fields.items():
+            if field == "Total Points":
+                st.write(f"**{field}:** {value:.2f}")
+            else:
+                kw_text, points, used_length = value
+                st.write(f"**{field}:** {kw_text} (Points: {points:.2f}, Length used: {used_length})")
 else:
     st.write("Please paste your table data and provide input in the three word fields to proceed.")
