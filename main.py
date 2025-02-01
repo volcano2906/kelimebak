@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import io
 
 # Function to perform word-level analysis on the keywords
 def analyze_words(keywords, list2):
@@ -33,39 +34,37 @@ st.title("Word Presence Analysis")
 st.write(
     """
     ### Instructions
-    1. **Upload a CSV file:**  
-       The CSV must contain the following columns:  
+    1. **Paste your table data:**  
+       Please paste your table data (CSV format) with the following columns in the text area below:  
        `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
     2. **Enter the second list:**  
        This should be a string of words separated by commas or spaces.
     """
 )
 
-# File uploader for the first input (table)
-uploaded_file = st.file_uploader(
-    "Upload a CSV file with columns: Keyword, Volume, Difficulty, Chance, KEI, Results, Rank", 
-    type=["csv"]
-)
+# Text area for copy-pasting the table data
+table_input = st.text_area("Paste your table data (CSV format)", height=200)
 
 # Text input for the second list
 list2_input = st.text_area("Enter the second list (comma or space-separated)", height=100)
 
-if uploaded_file is not None and list2_input:
-    # Read the CSV file into a DataFrame
+if table_input and list2_input:
+    # Attempt to read the pasted table as CSV from the text area
     try:
-        df_table = pd.read_csv(uploaded_file)
+        table_io = io.StringIO(table_input)
+        df_table = pd.read_csv(table_io)
     except Exception as e:
-        st.error(f"Error reading CSV file: {e}")
+        st.error(f"Error reading table data: {e}")
         st.stop()
 
-    # Required columns
+    # Required columns for the table
     required_columns = ["Keyword", "Volume", "Difficulty", "Chance", "KEI", "Results", "Rank"]
 
-    # Check if all required columns exist in the uploaded CSV
+    # Check if all required columns exist in the pasted table
     if not all(col in df_table.columns for col in required_columns):
-        st.error(f"The uploaded CSV must contain the following columns: {', '.join(required_columns)}")
+        st.error(f"The pasted table must contain the following columns: {', '.join(required_columns)}")
     else:
-        st.write("### Uploaded Table Preview")
+        st.write("### Table Preview")
         st.dataframe(df_table.head())
 
         # Extract the list of keywords from the table
@@ -90,4 +89,4 @@ if uploaded_file is not None and list2_input:
             mime="text/csv"
         )
 else:
-    st.write("Please upload a table and provide the second list to proceed.")
+    st.write("Please paste your table and provide the second list to proceed.")
