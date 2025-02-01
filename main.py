@@ -34,25 +34,27 @@ st.title("Word Presence Analysis")
 st.write(
     """
     ### Instructions
-    1. **Paste your table data:**  
-       Please paste your table data (CSV format) with the following columns in the text area below:  
+    1. **Paste your table data (Excel format):**  
+       Please copy and paste your Excel table data (typically tab-separated) into the text area below.  
+       The table must contain the following columns:  
        `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
     2. **Enter the second list:**  
        This should be a string of words separated by commas or spaces.
     """
 )
 
-# Text area for copy-pasting the table data
-table_input = st.text_area("Paste your table data (CSV format)", height=200)
+# Text area for copy-pasting the table data (Excel-style, tab-separated)
+table_input = st.text_area("Paste your Excel table data", height=200)
 
 # Text input for the second list
 list2_input = st.text_area("Enter the second list (comma or space-separated)", height=100)
 
 if table_input and list2_input:
-    # Attempt to read the pasted table as CSV from the text area
+    # Attempt to read the pasted table as TSV from the text area
     try:
         table_io = io.StringIO(table_input)
-        df_table = pd.read_csv(table_io)
+        # Using tab separator since Excel copy-paste is typically tab-separated
+        df_table = pd.read_csv(table_io, sep="\t")
     except Exception as e:
         st.error(f"Error reading table data: {e}")
         st.stop()
