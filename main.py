@@ -2,6 +2,26 @@ import streamlit as st
 import pandas as pd
 import io
 
+# Function to normalize the difficulty value based on the given rules
+def update_difficulity(diff):
+    try:
+        diff = float(diff)
+    except Exception:
+        return None  # or you could return a default value
+
+    if diff >= 0 and diff <= 20: 
+        return 1
+    if diff >= 21 and diff <= 30: 
+        return 2
+    elif diff >= 31 and diff <= 40: 
+        return 4
+    elif diff > 61 and diff <= 70:
+        return 8 
+    elif diff > 71 and diff <= 100:
+        return 12 
+    else:
+        return 1.0
+
 # Function to perform word-level analysis on the keywords
 def analyze_words(keywords, list2):
     # For each keyword, split into individual words and join them with a comma for display
@@ -31,6 +51,18 @@ def analyze_words(keywords, list2):
 
 st.title("Word Presence Analysis")
 
+st.write(
+    """
+    ### Instructions
+    1. **Paste your table data (Excel format):**  
+       Please copy and paste your Excel table data (typically tab-separated) into the text area below.  
+       The table must contain the following columns:  
+       `Keyword, Volume, Difficulty, Chance, KEI, Results, Rank`
+    2. **Enter the second list:**  
+       This should be a string of words separated by commas or spaces.
+    """
+)
+
 # Text area for copy-pasting the table data (Excel-style, tab-separated)
 table_input = st.text_area("Paste your Excel table data", height=200)
 
@@ -55,6 +87,13 @@ if table_input and list2_input:
         st.error(f"The pasted table must contain the following columns: {', '.join(required_columns)}")
     else:
         st.write("### Table Preview")
+        st.dataframe(df_table.head())
+
+        # Add the normalized difficulty column
+        df_table["Normalized Difficulty"] = df_table["Difficulty"].apply(update_difficulity)
+
+        # Display the table with the new column
+        st.write("### Table with Normalized Difficulty")
         st.dataframe(df_table.head())
 
         # Extract the list of keywords from the table
