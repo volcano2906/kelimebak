@@ -181,7 +181,6 @@ def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywor
                 total_points += f3_points  # Full points if the word is used
                 used_words.add(normalized_word)
                 remaining_chars -= len(word) + 1  # +1 for comma or space
-    
     return field, total_points, used_keywords, field_limit - remaining_chars
 
 def optimize_keyword_placement(keyword_list):
@@ -202,13 +201,17 @@ def optimize_keyword_placement(keyword_list):
     field3, points3, used_kw3, length3 = fill_field_with_word_breaking(100, sorted_keywords, used_words, used_keywords, stop_words)
     points3 *= (1/3)
     
+    # Join Field 3 keywords with a comma and ensure the result does not exceed 100 characters.
+    field3_str = ",".join(field3)
+    if len(field3_str) > 100:
+        field3_str = field3_str[:100]
+    
     total_points = points1 + points2 + points3
     
     return {
         "Field 1": (" ".join(field1), points1, length1),
         "Field 2": (" ".join(field2), points2, length2),
-        # For Field 3, join keywords with a comma (no extra space)
-        "Field 3": (",".join(field3), points3, length3),
+        "Field 3": (field3_str, points3, len(field3_str)),
         "Total Points": total_points
     }
 
