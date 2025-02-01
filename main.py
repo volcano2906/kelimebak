@@ -35,9 +35,7 @@ def update_difficulty(diff):
         diff = float(diff)
     except:
         return None
-    if 0 <= diff <= 10:
-        return 0.4
-    elif 10 <= diff <= 20:
+    if 0 <= diff <= 20:
         return 1
     elif 21 <= diff <= 30:
         return 2
@@ -145,8 +143,11 @@ if table_input and list2_input:
         # Calculate the Final Score column using the new columns
         df_table["Final Score"] = df_table.apply(calculate_final_score, axis=1)
         
+        # Remove the Chance and KEI columns
+        df_table = df_table.drop(columns=["Chance", "KEI"])
+        
         st.write("### Table Preview (with Normalized Columns)")
-        st.dataframe(df_table)  # Display the full table
+        st.dataframe(df_table)  # Display the full table without Chance and KEI
 
         # Extract the list of keywords from the table
         keywords = df_table["Keyword"].dropna().tolist()
