@@ -109,7 +109,7 @@ if table_input and list2_input:
         df_table["Normalized Rank"] = df_table["Rank"].apply(update_rank)
         
         st.write("### Table Preview (with Normalized Columns)")
-        st.dataframe(df_table.head())
+        st.dataframe(df_table)  # Display the full table
 
         # Extract the list of keywords from the table
         keywords = df_table["Keyword"].dropna().tolist()
