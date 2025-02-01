@@ -10,7 +10,7 @@ def update_difficulity(diff):
         return diff  # If conversion fails, return original value
     if diff >= 0 and diff <= 20: 
         return 1
-    if diff >= 21 and diff <= 30: 
+    elif diff >= 21 and diff <= 30: 
         return 2
     elif diff > 31 and diff <= 40: 
         return 4
