@@ -13,14 +13,16 @@ def analyze_words(list1, list2):
     results_split_words_updated = {
         phrase: {
             "Split Words": split_words,
-            "Status": ", ".join([word for word in phrase.split() if word.lower() not in list2_normalized])
+            "Status": ",".join([word for word in phrase.split() if word.lower() not in list2_normalized])
         }
         for phrase, split_words in list1_with_words.items()
     }
 
     # Converting the updated results into a DataFrame
     results_split_words_updated_df = pd.DataFrame([
-        {"Phrase": phrase.encode("utf-8").decode("utf-8"), "Split Words": data["Split Words"].encode("utf-8").decode("utf-8"), "Status": data["Status"].encode("utf-8").decode("utf-8")}
+        {"Phrase": phrase.encode("utf-8").decode("utf-8"), 
+         "Split Words": data["Split Words"].encode("utf-8").decode("utf-8"), 
+         "Status": data["Status"].encode("utf-8").decode("utf-8")}
         for phrase, data in results_split_words_updated.items()
     ])
 
