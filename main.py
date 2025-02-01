@@ -67,7 +67,22 @@ def update_rank(rank):
     else:
         return 1
 
-st.title("Word Presence Analysis with Normalized Difficulty and Rank")
+# Function to update/normalize the Results column into a Calculated Result
+def update_result(res):
+    try:
+        res = float(res)
+    except:
+        return 1
+    if 1 <= res <= 50:
+        return 3
+    elif 51 <= res <= 100:
+        return 2
+    elif 101 <= res <= 249:
+        return 1.5
+    else:
+        return 1
+
+st.title("Word Presence Analysis with Normalized Columns")
 
 st.write(
     """
@@ -104,9 +119,10 @@ if table_input and list2_input:
     if not all(col in df_table.columns for col in required_columns):
         st.error(f"The pasted table must contain the following columns: {', '.join(required_columns)}")
     else:
-        # Create new columns for Normalized Difficulty and Normalized Rank
+        # Create new columns for Normalized Difficulty, Normalized Rank, and Calculated Result
         df_table["Normalized Difficulty"] = df_table["Difficulty"].apply(update_difficulty)
         df_table["Normalized Rank"] = df_table["Rank"].apply(update_rank)
+        df_table["Calculated Result"] = df_table["Results"].apply(update_result)
         
         st.write("### Table Preview (with Normalized Columns)")
         st.dataframe(df_table)  # Display the full table
