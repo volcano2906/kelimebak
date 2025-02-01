@@ -29,13 +29,15 @@ def analyze_words(keywords, combined_text):
 
     return results_df
 
-# Function to update/normalize the Difficulty column
+# Updated function to normalize the Difficulty column based on new thresholds
 def update_difficulty(diff):
     try:
         diff = float(diff)
     except:
         return None
-    if 0 <= diff <= 20:
+    if 0 <= diff <= 10:
+        return 0.4
+    elif 11 <= diff <= 20:
         return 1
     elif 21 <= diff <= 30:
         return 2
@@ -148,32 +150,4 @@ if table_input and combined_text:
         df_table["Final Score"] = df_table.apply(calculate_final_score, axis=1)
         
         # Remove the Chance and KEI columns
-        df_table = df_table.drop(columns=["Chance", "KEI"])
-        
-        # Sort the DataFrame by Final Score in descending order
-        df_table = df_table.sort_values(by="Final Score", ascending=False)
-        
-        st.write("### Table Preview (with Normalized Columns)")
-        st.dataframe(df_table)
-
-        # Extract the list of keywords from the table
-        keywords = df_table["Keyword"].dropna().tolist()
-
-        # Display the combined text (for debugging/information)
-        st.write(f"### Combined Word List: {combined_text}")
-        
-        # Perform the word analysis using the combined text
-        analysis_df = analyze_words(keywords, combined_text)
-
-        st.write("### Analysis Results")
-        st.dataframe(analysis_df)
-
-        # Download button for the analysis results CSV
-        st.download_button(
-            label="Download Analysis Results as CSV",
-            data=analysis_df.to_csv(index=False, encoding="utf-8"),
-            file_name="word_presence_analysis.csv",
-            mime="text/csv"
-        )
-else:
-    st.write("Please paste your table data and provide input in the three word fields to proceed.")
+        df_table = df_table.drop(columns=["Chance", "
