@@ -13,11 +13,11 @@ def update_difficulity(diff):
     elif diff >= 21 and diff <= 30: 
         return 2
     elif diff > 31 and diff <= 40: 
-        return 4
+        return 3
     elif diff > 41 and diff <= 70:
-        return 8 
+        return 6 
     elif diff > 71 and diff <= 100:
-        return 12 
+        return 8 
     else:
         return 1.0
 
