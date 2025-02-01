@@ -82,7 +82,23 @@ def update_result(res):
     else:
         return 1
 
-st.title("Word Presence Analysis with Normalized Columns")
+# Function to calculate the Final Score based on the formula:
+# (Volume / Normalized Difficulty) * Normalized Rank * Calculated Result
+def calculate_final_score(row):
+    try:
+        volume = float(row["Volume"])
+    except:
+        volume = 0
+    nd = row["Normalized Difficulty"]
+    nr = row["Normalized Rank"]
+    cr = row["Calculated Result"]
+    try:
+        final_score = (volume / nd) * nr * cr
+    except Exception as e:
+        final_score = 0
+    return final_score
+
+st.title("Word Presence Analysis with Normalized Columns and Final Score")
 
 st.write(
     """
@@ -123,6 +139,9 @@ if table_input and list2_input:
         df_table["Normalized Difficulty"] = df_table["Difficulty"].apply(update_difficulty)
         df_table["Normalized Rank"] = df_table["Rank"].apply(update_rank)
         df_table["Calculated Result"] = df_table["Results"].apply(update_result)
+        
+        # Calculate the Final Score column using the new columns
+        df_table["Final Score"] = df_table.apply(calculate_final_score, axis=1)
         
         st.write("### Table Preview (with Normalized Columns)")
         st.dataframe(df_table)  # Display the full table
