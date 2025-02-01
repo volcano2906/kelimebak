@@ -178,9 +178,10 @@ def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywor
             normalized_word = normalize_word(word)
             if normalized_word not in used_words and normalized_word not in stop_words and remaining_chars >= len(word):
                 field.append(word)
-                total_points += f3_points
+                total_points += f3_points  # Full points if the word is used
                 used_words.add(normalized_word)
-                remaining_chars -= len(word) + 1
+                remaining_chars -= len(word) + 1  # +1 for comma or space
+    
     return field, total_points, used_keywords, field_limit - remaining_chars
 
 def optimize_keyword_placement(keyword_list):
@@ -206,7 +207,8 @@ def optimize_keyword_placement(keyword_list):
     return {
         "Field 1": (" ".join(field1), points1, length1),
         "Field 2": (" ".join(field2), points2, length2),
-        "Field 3": (", ".join(field3), points3, length3),
+        # For Field 3, join keywords with a comma (no extra space)
+        "Field 3": (",".join(field3), points3, length3),
         "Total Points": total_points
     }
 
@@ -257,7 +259,7 @@ if table_input:
         
         # Extract all keywords (for word analysis) from the table
         excel_keywords = df_table["Keyword"].dropna().tolist()
-
+        
         ##############################
         # Display Text Inputs and Optimized Results
         ##############################
