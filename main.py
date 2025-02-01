@@ -294,7 +294,6 @@ if table_input:
         
         # Combine the three fields for word analysis
         combined_text = f"{first_field} {second_field} {third_field}".strip()
-        st.write("### Combined Word List for Analysis:", combined_text)
         
         # Perform word analysis on the combined text using keywords from Excel
         analysis_df = analyze_words(excel_keywords, combined_text)
@@ -308,6 +307,5 @@ if table_input:
         )
         
         # Also, display total optimized points
-        st.write("**Total Optimized Points:**", optimized_fields.get("Total Points"))
 else:
     st.write("Please paste your table data to proceed.")
