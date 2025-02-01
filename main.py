@@ -194,7 +194,7 @@ def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywor
 
 def optimize_keyword_placement(keyword_list):
     """Optimize keyword placement across three fields for maximum points."""
-    stop_words = {"the", "and", "for", "to", "of", "an", "a", "in", "on", "with", "by", "as", "at", "is"}
+    stop_words = {"the", "and", "for", "to", "of", "an", "a", "in", "on", "with", "by", "as", "at", "is","app,"free"}
     expanded_keywords = expand_keywords(keyword_list, max_length=29)
     sorted_keywords = calculate_effective_points(expanded_keywords)
     used_words = set()
