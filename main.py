@@ -285,6 +285,7 @@ if table_input:
         analysis_df = analyze_words(excel_keywords, combined_text)
         st.write("### Word Analysis Results")
         st.dataframe(analysis_df, use_container_width=True)
+        st.dataframe(df_table, use_container_width=True)
         st.download_button(
             label="Download Word Analysis CSV",
             data=analysis_df.to_csv(index=False, encoding="utf-8"),
