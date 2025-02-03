@@ -60,10 +60,12 @@ def update_rank(rank):
     except:
         rank = 250.0
     if 1 <= rank <= 10:
-        return 4
+        return 5
     elif 11 <= rank <= 30:
-        return 3
-    elif 31 <= rank <= 249:
+        return 4
+    elif 31 <= rank <= 50:
+        return 4
+    elif 51 <= rank <= 249:
         return 2
     else:
         return 1
