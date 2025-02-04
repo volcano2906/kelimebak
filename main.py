@@ -127,22 +127,44 @@ def normalize_word(word):
     return word.rstrip('s')
 
 def expand_keywords(keyword_list, max_length=29):
-    """Generate potential keyword combinations based on existing keywords and calculate their adjusted points."""
+    """Generate potential keyword combinations based on existing keywords and calculate their adjusted points, ensuring max length constraint."""
     expanded_keywords = set(keyword_list)
     keyword_map = {kw: points for kw, points in keyword_list}
-    
+
     for kw1, points1 in keyword_list:
         for kw2, points2 in keyword_list:
             if kw1 != kw2:
                 words1 = kw1.split()
                 words2 = kw2.split()
-                combined = words1 + [w for w in words2 if w not in words1]  # Ordered expansion
+
+                # Combine words ensuring no duplicates
+                combined = words1 + [w for w in words2 if w not in words1]
+
+                # Ensure distinct words
+                if len(set(combined)) != len(combined):
+                    continue
+
                 new_kw = " ".join(combined)
-                if new_kw not in keyword_map and len(new_kw) <= max_length:
-                    distance = abs(len(words1) - len(words2))
-                    new_points = points1 + (points2 / (distance + 1))
-                    expanded_keywords.add((new_kw, new_points))
-    
+
+                # Check if new keyword fits character limit and is unique
+                if new_kw not in keyword_map and new_kw not in expanded_keywords and len(new_kw) <= max_length:
+                    # Handle common words for distance calculation
+                    common_words = set(words1) & set(words2)
+                    if common_words:
+                        overlap_word = list(common_words)[0]  # Take the first common word
+                        index1 = words1.index(overlap_word)
+                        index2 = words2.index(overlap_word)
+
+                        # Correct distance calculation: count words between occurrences
+                        distance = abs((len(words1) - 1 - index1) + index2)
+                        new_points = points1 + (points2 / (distance + 1))
+                    else:
+                        new_points = points1 + points2
+
+                    # Final distinct word check
+                    if len(set(new_kw.split())) == len(new_kw.split()):
+                        expanded_keywords.add((new_kw, new_points))
+
     return list(expanded_keywords)
 
 def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_keywords):
