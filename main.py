@@ -37,8 +37,10 @@ def update_difficulty(diff):
         diff = float(diff)
     except:
         return None
-    if 0 <= diff <= 10:
-        return 0.4
+    if 0 <= diff <= 5:
+        return 0.3
+    elif 6 <= diff <= 10:
+        return 0.5
     elif 11 <= diff <= 20:
         return 1
     elif 21 <= diff <= 30:
