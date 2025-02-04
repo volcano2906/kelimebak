@@ -82,6 +82,8 @@ def update_result(res):
         return 3
     elif 21 <= res <= 50:
         return 2
+    elif 51 <= res <= 200:
+        return 1.5
     else:
         return 1
 
