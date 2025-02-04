@@ -78,12 +78,10 @@ def update_result(res):
         res = float(res)
     except:
         return 1
-    if 1 <= res <= 50:
+    if 1 <= res <= 20:
         return 3
-    elif 51 <= res <= 100:
+    elif 21 <= res <= 50:
         return 2
-    elif 101 <= res <= 249:
-        return 1.5
     else:
         return 1
 
