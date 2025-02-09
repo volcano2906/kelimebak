@@ -33,6 +33,7 @@ def analyze_words(keywords, combined_text):
 
 # Function to update/normalize the Difficulty column
 # Define the stop words to be removed
+# Define the stop words to be removed
 stop_words = {"photos","images","the", "and", "for", "to", "of", "an", "a", "in", "on", "with", "by", "as", "at", "is", "app", "free"}
 
 def remove_stop_words(text, stop_words):
@@ -389,6 +390,7 @@ def optimize_keyword_placement(keyword_list):
         "Field 3": (field3_str, points3, len(field3_str)),
         "Total Points": total_points
     }
+
 
 ##############################
 # Part 3: Streamlit Interface
