@@ -128,6 +128,11 @@ def calculate_final_score(row):
 # Part 2: Optimization Functions
 ##############################
 
+
+##############################
+# Part 2: Optimization Functions
+##############################
+
 def calculate_effective_points(keyword_list):
     """Calculate effective points per keyword and new keyword combinations based on total point."""
     def keyword_score(keyword, base_points):
@@ -136,12 +141,12 @@ def calculate_effective_points(keyword_list):
             return base_points  # Exact match (single word)
         return sum(base_points / (i + 1) for i in range(len(words) - 1))
     
-    return [(kw, points, keyword_score(kw, points), keyword_score(kw, points), keyword_score(kw, points) * (1/3))
+    return [(kw, points, keyword_score(kw, points), keyword_score(kw, points), keyword_score(kw, points) * (1/1))
             for kw, points in keyword_list]
 
 def sort_keywords_by_total_points(keyword_list):
     """Sort keywords by total calculated points instead of per character efficiency."""
-    return sorted(keyword_list, key=lambda x: x[1], reverse=True)
+    return sorted(keyword_list, key=lambda x: x[2], reverse=True)
 
 def normalize_word(word):
     """Normalize words to handle singular/plural variations"""
@@ -195,6 +200,7 @@ def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_ke
     remaining_chars = field_limit
     
     sorted_keywords = sort_keywords_by_total_points(keywords)
+    
     while remaining_chars > 0 and sorted_keywords:
         best_keyword = sorted_keywords.pop(0)
         kw, base_points, f1_points, f2_points, f3_points = best_keyword
@@ -211,57 +217,137 @@ def construct_best_phrase(field_limit, keywords, multiplier, used_words, used_ke
     
     return field, total_points, used_keywords, field_limit - remaining_chars
 
-def fill_field_with_word_breaking(field_limit, keywords, used_words, used_keywords, stop_words):
+def fill_field_with_word_breaking(field_limit, df_table, used_words, used_keywords, stop_words, field1, field2):
     """
-    Fill Field 3 with word breaking, ensuring that adding a word (plus a comma if needed)
-    does not exceed the field_limit (100 characters).
+    Optimized Field3 filling:
+    - Uses df_table's first (Keyword) and last (Final Score) columns.
+    - Prioritizes exact match keywords (full score).
+    - Assigns partial match keywords half score.
+    - Uses (score / character count) to ensure maximum efficiency.
+    - Dynamically replaces inefficient keywords.
+    - Stops filling at 96+ characters.
     """
     field = []
     total_points = 0
     remaining_chars = field_limit
-    
-    for kw, base_points, f1_points, f2_points, f3_points in keywords:
+    field1_words = set(field1.split())
+    field2_words = set(field2.split())
+    field3_words = set()  # Track used words in Field3 to prevent duplicates
+    field_scores = {}  # Store scores per character for each added keyword
+    kw_to_original = {}  # Maps added words back to their original keyword
+
+    # Extract keywords and final scores from df_table
+    keywords = list(zip(df_table.iloc[:, 0], df_table.iloc[:, -1]))  # First & Last column
+
+    for kw_tuple in keywords:
+        print(kw_tuple[0])
+        kw = remove_stop_words(kw_tuple[0], stop_words)
+        print(kw)
+        f3_points = float(kw_tuple[1])  # Extract Final Score
+        kw_words = set(kw.split())
+
         if kw in used_keywords:
-            continue  # Skip already used full keywords
-        words = kw.split()
-        for word in words:
-            normalized_word = normalize_word(word)
-            if normalized_word not in used_words and normalized_word not in stop_words:
-                # Determine separator length: 1 character for a comma if field is not empty.
-                sep_length = 1 if field else 0
-                if remaining_chars - (len(word) + sep_length) >= 0:
-                    field.append(word)
-                    total_points += f3_points  # Full points if the word is used
-                    used_words.add(normalized_word)
-                    remaining_chars -= (len(word) + sep_length)
-                else:
-                    # Stop adding words if the next one doesn't fit.
-                    break
+            continue  # Skip already used keywords
+            
+
+        # **Exact Match Case** (Full Score)
+        if kw in df_table.iloc[:, 0].values:  
+            score = f3_points
+            decay_factor = 1
+            add_words = kw_words - field1_words - field2_words - field3_words  # New words to add
+
+        # **Partial Match Case** (Half Score)  
+        elif kw_words.intersection(field1_words) or kw_words.intersection(field2_words):
+            score = f3_points * 0.5
+            decay_factor = 1
+            add_words = kw_words - field1_words - field2_words - field3_words  # New words to add
+
+        # **Decay Case** (Words separated, apply distance-based decay)
+        else:
+            extra_words = len(kw_words - field1_words - field2_words)
+            decay_factor = 1 / (extra_words + 1) if extra_words > 0 else 0.5
+            score = f3_points * decay_factor
+            add_words = kw_words - field1_words - field2_words - field3_words  # New words to add
+
+        if not add_words:
+            continue  # Skip if no new words to add
+
+        # **Calculate keyword length based on added words**
+        added_kw = ",".join(add_words)  # Join words with commas
+        kw_length = len(added_kw.replace(",", ""))  # Remove commas to get true character count
+
+        # **Calculate Score Per Character**
+        score_per_char = score / max(1, kw_length)  # Avoid division by zero
+
+        # **Check if it fits & optimize replacement**
+        if remaining_chars - kw_length - 1 >= 0:  # Ensure space for a comma
+            field.append(added_kw)
+            field_scores[added_kw] = score_per_char  # Store score per character
+            kw_to_original[added_kw] = kw  # Store original keyword
+            total_points += score
+            used_keywords.add(kw)
+            field3_words.update(add_words)
+            remaining_chars -= kw_length + 1  # Account for comma
+        else:
+            # **Try replacing a less efficient keyword**
+            if field:
+                worst_kw = min(field, key=lambda k: field_scores.get(k, 0), default=None)
+
+                if worst_kw and score_per_char > field_scores.get(worst_kw, 0):
+                    field.remove(worst_kw)
+                    field.append(added_kw)
+
+                    # Remove the original keyword from used_keywords safely
+                    original_kw = kw_to_original.pop(worst_kw, None)
+                    if original_kw:
+                        used_keywords.discard(original_kw)
+
+                    kw_to_original[added_kw] = kw  # Store new original keyword
+                    used_keywords.add(kw)
+                    field3_words.update(add_words)
+                    field_scores[added_kw] = score_per_char  # Update score dictionary
+
+        # **Stop if field reaches 96+ characters**
+        if field_limit - remaining_chars >= 120:
+            break
+
+    # **Format Output**
     return field, total_points, used_keywords, field_limit - remaining_chars
+
+
 
 def optimize_keyword_placement(keyword_list):
     """Optimize keyword placement across three fields for maximum points."""
-    stop_words = {"the", "and", "for", "to", "of", "an", "a", "in", "on", "with", "by", "as", "at", "is","app","free"}
     expanded_keywords = expand_keywords(keyword_list, max_length=29)
     sorted_keywords = calculate_effective_points(expanded_keywords)
+    sorted_keywords=sort_keywords_by_total_points(sorted_keywords)
+    
     used_words = set()
     used_keywords = set()
     
     # Construct best phrase dynamically for Field 1 (multiplier 1)
     field1, points1, used_kw1, length1 = construct_best_phrase(29, sorted_keywords, 1, used_words, used_keywords)
-    
+    print(field1)
     # Construct best phrase dynamically for Field 2 (multiplier 1)
     field2, points2, used_kw2, length2 = construct_best_phrase(29, sorted_keywords, 1, used_words, used_keywords)
-    
+    print(field2)
     # Fill Field 3 (multiplier 1/3, allows word breaking) with a 100-character limit
-    field3, points3, used_kw3, length3 = fill_field_with_word_breaking(100, sorted_keywords, used_words, used_keywords, stop_words)
-    points3 *= (1/3)
+    field3, points3, used_kw3, lenth = fill_field_with_word_breaking(
+    130,  # Field limit (100 characters for Field 3)
+    df_table,  # The keyword list sorted by points
+    used_words,  # Words already used
+    used_keywords,  # Keywords already used
+    stop_words,  # Common words to ignore
+    " ".join(field1),  # Convert Field 1 list to a string
+    " ".join(field2)   # Convert Field 2 list to a string
+    )
+    points3 *= (1/1)
     
     # Join Field 3 keywords with a comma (no extra space)
     field3_str = ",".join(field3)
     # Ensure that the final string does not exceed 100 characters.
-    if len(field3_str) > 100:
-        field3_str = field3_str[:100]
+    if len(field3_str) > 130:
+        field3_str = field3_str[:130]
     
     total_points = points1 + points2 + points3
     
@@ -271,6 +357,7 @@ def optimize_keyword_placement(keyword_list):
         "Field 3": (field3_str, points3, len(field3_str)),
         "Total Points": total_points
     }
+
 
 ##############################
 # Part 3: Streamlit Interface
