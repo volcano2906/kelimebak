@@ -32,6 +32,43 @@ def analyze_words(keywords, combined_text):
     return results_df
 
 # Function to update/normalize the Difficulty column
+# Define the stop words to be removed
+stop_words = {"photos","images","the", "and", "for", "to", "of", "an", "a", "in", "on", "with", "by", "as", "at", "is", "app", "free"}
+
+def remove_stop_words(text, stop_words):
+    """Remove exact match stop words using regex and normalize spaces."""
+    stop_words_pattern = r'\b(?:' + '|'.join(re.escape(word) for word in stop_words) + r')\b'
+    
+    # Remove stop words and clean spaces
+    cleaned_text = re.sub(stop_words_pattern, '', text, flags=re.IGNORECASE).strip()
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # Ensure single spacing
+    
+    return cleaned_text
+
+
+# Function to perform word-level analysis on the keywords
+def analyze_words(keywords, combined_text):
+    # For each keyword, split into individual words and join them with a comma for display
+    keywords_with_words = {phrase: ", ".join(phrase.split()) for phrase in keywords}
+    # Normalize the combined text (handling patterns like "english,american,")
+    combined_normalized = [word.strip().lower() for word in combined_text.replace(",", " ").split() if word.strip()]
+    # Build the analysis: for each phrase, list its words and append those not found in the combined list
+    results = {
+        phrase: {
+            "Split Words": keywords_with_words[phrase],
+            "Status": ",".join([word for word in phrase.split() if word.lower() not in combined_normalized])
+        }
+        for phrase in keywords_with_words
+    }
+    # Convert the results dictionary into a DataFrame for display
+    results_df = pd.DataFrame([
+        {"Phrase": phrase,
+         "Split Words": data["Split Words"],
+         "Status": data["Status"]}
+        for phrase, data in results.items()
+    ])
+    return results_df
+
 # Function to update/normalize the Difficulty column
 def update_difficulty(diff):
     try:
@@ -123,11 +160,6 @@ def calculate_final_score(row):
     except Exception:
         final_score = 0
     return final_score
-
-##############################
-# Part 2: Optimization Functions
-##############################
-
 
 ##############################
 # Part 2: Optimization Functions
@@ -357,7 +389,6 @@ def optimize_keyword_placement(keyword_list):
         "Field 3": (field3_str, points3, len(field3_str)),
         "Total Points": total_points
     }
-
 
 ##############################
 # Part 3: Streamlit Interface
