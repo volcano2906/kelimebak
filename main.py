@@ -32,15 +32,16 @@ def analyze_words(keywords, combined_text):
     return results_df
 
 # Function to update/normalize the Difficulty column
+# Function to update/normalize the Difficulty column
 def update_difficulty(diff):
     try:
         diff = float(diff)
     except:
         return None
     if 0 <= diff <= 5:
-        return 0.3
-    elif 6 <= diff <= 10:
         return 0.5
+    elif 6 <= diff <= 10:
+        return 0.8
     elif 11 <= diff <= 20:
         return 1
     elif 21 <= diff <= 30:
@@ -87,6 +88,25 @@ def update_result(res):
     else:
         return 1
 
+def normalize_competitor(value):
+    try:
+        value = float(value)  # Convert to float to handle string inputs
+    except ValueError:
+        return 0  # Return 0 if conversion fails (e.g., if value is non-numeric)
+
+    if 1 <= value <= 10:
+        return 5
+    elif 11 <= value <= 20:
+        return 4.5
+    elif 21 <= value <= 30:
+        return 4.2
+    elif 31 <= value <= 60:
+        return 4
+    elif 61 <= value <= 100:
+        return 3
+    else:
+        return 0
+
 # Function to calculate the Final Score based on the formula:
 # (Volume / Normalized Difficulty) * Normalized Rank * Calculated Result
 def calculate_final_score(row):
@@ -97,8 +117,9 @@ def calculate_final_score(row):
     nd = row["Normalized Difficulty"]
     nr = row["Normalized Rank"]
     cr = row["Calculated Result"]
+    ac = row["All Competitor Score"]
     try:
-        final_score = (volume / nd) * nr * cr
+        final_score = (volume / nd) * nr * cr*ac
     except Exception:
         final_score = 0
     return final_score
